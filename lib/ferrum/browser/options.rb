@@ -42,9 +42,14 @@ module Ferrum
         @logger = parse_logger(@options[:logger])
         @base_url = parse_base_url(@options[:base_url]) if @options[:base_url]
         @url = @options[:url].to_s if @options[:url]
+        @query_params = @options.fetch(:query_params, {})
 
         @options.freeze
         @browser_options.freeze
+      end
+
+      def query_params
+        URI.encode_www_form(@query_params)
       end
 
       def to_h

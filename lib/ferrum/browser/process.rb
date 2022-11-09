@@ -64,9 +64,19 @@ module Ferrum
 
         if options.url
           url = URI.join(options.url, "/json/version")
+          url.query = options.query_params
           response = JSON.parse(::Net::HTTP.get(url))
-          self.ws_url = response["webSocketDebuggerUrl"]
-          parse_browser_versions
+
+          ws_url = URI.parse(response["webSocketDebuggerUrl"])
+          ws_url.scheme = "wss"
+          ws_url.query = options.query_params
+          self.ws_url = ws_url.to_s
+
+          @v8_version = response["V8-Version"]
+          @browser_version = response["Browser"]
+          @webkit_version = response["WebKit-Version"]
+          @default_user_agent = response["User-Agent"]
+          @protocol_version = response["Protocol-Version"]
           return
         end
 
@@ -160,7 +170,7 @@ module Ferrum
       def ws_url=(url)
         @ws_url = Addressable::URI.parse(url)
         @host = @ws_url.host
-        @port = @ws_url.port
+        @port = @ws_url.port# || 443
       end
 
       def parse_browser_versions

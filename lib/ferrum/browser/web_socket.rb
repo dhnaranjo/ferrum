@@ -16,7 +16,13 @@ module Ferrum
         @url      = url
         @logger   = logger
         uri       = URI.parse(@url)
-        @sock     = TCPSocket.new(uri.host, uri.port)
+        @sock     = TCPSocket.new(uri.host, uri.port || 443)
+        ctx = OpenSSL::SSL::SSLContext.new
+        ctx.set_params(verify_mode: OpenSSL::SSL::VERIFY_PEER)
+        @sock = OpenSSL::SSL::SSLSocket.new(@sock, ctx).tap do |socket|
+          socket.sync_close = true
+          socket.connect
+        end
         max_receive_size ||= ::WebSocket::Driver::MAX_LENGTH
         @driver   = ::WebSocket::Driver.client(self, max_length: max_receive_size)
         @messages = Queue.new
